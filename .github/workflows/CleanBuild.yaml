@@ -8,20 +8,18 @@ jobs:
   GenerateRelease:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - name: Check out repository code
         uses: actions/checkout@v4
       - run: |
           echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
           echo "PWD is [ ${{ github.workspace }} ]"
           ls -al .
-          ls -al ${{ github.workspace }}
 
       ### Create Release Files
       - name: Zip CleanBuild 
         uses: montudor/action-zip@v1
         with: 
-          args: zip -qq -r cleanbuild.zip CleanBuild.ps1 icon.ico    
+          args: zip -qq -r cleanbuild.zip CleanBuild/CleanBuild.ps1 CleanBuild/icon.ico    
 
       ### Create Tag and Release 
       - name: Bump version and push tag
