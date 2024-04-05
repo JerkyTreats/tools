@@ -32,18 +32,22 @@ Set-Content -Path $Path -Value $Req.Content
 
 
 ## Add Script to Right-Click Explorer Menu
-$RegPath = 'Registry::HKEY_CLASSES_ROOT\Directory\shell\CleanBuild\command'
+$RegPath = 
+    'Registry::HKEY_CLASSES_ROOT\Directory\shell\CleanBuild\command', # Right Click on a folder
+    'Registry::HKEY_CLASSES_ROOT\Directory\Background\shell\CleanBuild\command' #Right Click in explorer window
 $RegName = "(Default)"
 $RegValue = $Path
 $IconPath = Join-Path -Path $AppData -ChildPath "Tools\CleanBuild\icon.ico"
 
-
 Write-Host "Adding Command to Right-Click File Context Menu"
 Write-Host "Writing [$RegPath]"
-New-Item -Path $RegPath -Force 
 
-New-ItemProperty -Path $RegPath $RegName -Value $RegValue -PropertyType String -Force #| Out-Null
+foreach ( $rp in $RegPath ) {
+    New-Item -Path $rp -Force 
+    New-ItemProperty -Path $rp $RegName -Value $RegValue -PropertyType String -Force #| Out-Null
+    New-ItemProperty -Path $rp Icon -Value $IconPath -PropertyType String -Force 
 
-if (Test-Path -Path $RegPath){
-    Write-Host $Ok
+    if (Test-Path -Path $RegPath){
+        Write-Host $Ok
+    }
 }
