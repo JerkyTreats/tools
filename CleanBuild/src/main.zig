@@ -5,14 +5,21 @@ const File = std.fs.File;
 // - Take an directory as an argument
 // - Shallow walk the dir and match any subdir with an array of dirs that should be deleted
 // - Delete those dirs
+//
+// if args.len != 1 {fail}
+// if ! fs.dir.is_path(args[0]) {fail}
+// else
+// loop subdirs, single level
+// if list_of_files_to_delete contains subdir, delete
+//
 
 pub fn main() !void {
-    // const dirs_to_delete = [_][]const u8{
-    //     ".vs",
-    //     "Binaries",
-    //     "DerivedDataCache",
-    //     "Intermediate",
-    // };
+    const dirs_to_delete = [_][]const u8{
+        ".vs",
+        "Binaries",
+        "DerivedDataCache",
+        "Intermediate",
+    };
 
     // Get allocator
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -20,44 +27,59 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     // Parse args into string array (error union needs 'try')
+    // args[0] contains path\to\executable
+    // args[1] would be first passed argument
     const args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    // if args.len != 1 {fail}
-    // if ! fs.dir.is_path(args[0]) {fail}
-    // else
-    // loop subdirs, single level
-    // if list_of_files_to_delete contains subdir, delete
-    //
-
-    if (args.len != 1) {
-        std.debug.print("Expected 1 argument, got {}", .{args.len});
+    if (args.len != 2) {
+        std.debug.print("Program expected to be run with 1 argument given, got {d}\n", .{args.len - 1});
+        std.process.exit(1);
     }
+
+    std.debug.print("Args[0] = [{s}]\n", .{args[0]});
+    std.debug.print("Args.len = [{d}]\n", .{args.len});
 
     const opts = Dir.OpenDirOptions{ .iterate = true };
 
-    var working_dir = try std.fs.cwd().openDir(args[0], opts);
+    const args_path = args[1];
+    std.debug.print("args_path = [{s}]\n", .{args_path});
+
+    // var working_dir = try std.fs.cwd().openDir(args_path, opts);
+    var working_dir = std.fs.cwd().openDir(args_path, opts) catch |e| {
+        std.debug.print(
+            \\error opening directory: {s}
+            \\hint: {s}
+        , .{
+            @errorName(e),
+            switch (e) {
+                error.FileNotFound => "Directory not found\n",
+                else => "\n",
+            },
+        });
+        std.process.exit(1);
+    };
+
     defer working_dir.close();
+
+    std.debug.print("working_dir = [{}]\n", .{(working_dir)});
+    std.debug.print("TypeOf working_dir = [{}]\n", .{@TypeOf(working_dir)});
 
     var iter = working_dir.iterate();
     while (try iter.next()) |entry| {
-        std.debug.print("File {s} ({})\n", .{ entry.name, entry.kind });
-
         if (entry.kind != File.Kind.directory) {
             continue;
         }
 
-        // for (dirs_to_delete) |dir| {
-        //     if (dir == entry.name) {
-        //         std.debug.print("Deleting directory [{s}]", .{entry.name});
-        //         Dir.deleteTree(working_dir, entry.name);
-        //     }
-        // }
-    }
+        std.debug.print("File {s} ({})\n", .{ entry.name, entry.kind });
 
-    // Get and print them!
-    std.debug.print("There are {d} args:\n", .{args.len});
-    for (args) |arg| {
-        std.debug.print("  {s}\n", .{arg});
+        for (dirs_to_delete) |dir| {
+            std.debug.print("Dir: {s}; TypeOf ({})\n", .{ dir, @TypeOf(dir) });
+
+            // if (dir == entry.name) {
+            //     std.debug.print("Deleting directory [{s}]", .{entry.name});
+            //     // Dir.deleteTree(working_dir, entry.name);
+            // }
+        }
     }
 }
