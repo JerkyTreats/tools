@@ -71,15 +71,15 @@ pub fn main() !void {
             continue;
         }
 
-        std.debug.print("File {s} ({})\n", .{ entry.name, entry.kind });
+        std.debug.print("File {s} {} ({})\n", .{ entry.name, @TypeOf(entry.name), entry.kind });
 
-        for (dirs_to_delete) |dir| {
-            std.debug.print("Dir: {s}; TypeOf ({})\n", .{ dir, @TypeOf(dir) });
+        for (dirs_to_delete) |dir_to_delete| {
+            // std.debug.print("Dir: {s}; TypeOf ({})\n", .{ dir_to_delete, @TypeOf(dir_to_delete) });
 
-            // if (dir == entry.name) {
-            //     std.debug.print("Deleting directory [{s}]", .{entry.name});
-            //     // Dir.deleteTree(working_dir, entry.name);
-            // }
+            if (std.mem.eql(u8, dir_to_delete, entry.name)) {
+                std.debug.print("Deleting directory [{s}]\n", .{entry.name});
+                try Dir.deleteTree(working_dir, entry.name);
+            }
         }
     }
 }
